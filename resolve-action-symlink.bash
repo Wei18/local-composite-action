@@ -15,28 +15,38 @@ validate_env() {
 parse_repo() {
   IFS='/' read -r ORG REPO <<< "$COMPOSITE_ACTION_REPOSITORY"
   [[ -z "$ORG" || -z "$REPO" ]] && log_error "Invalid COMPOSITE_ACTION_REPOSITORY format"
-  log_debug "Parsed ORG_NAME=$ORG_NAME, REPO_NAME=$REPO_NAME"
+  log_debug "Parsed ORG=$ORG, REPO_NAME=$REPO"
 }
 
 find_repo_dir() {
-  local path="$COMPOSITE_ACTION_PATH"
-  while [ "$path" != "/" ]; do
-    local parent="$(dirname "$path")"
-    if [[ "${path##*/,,}" == "${REPO,,}" && "${parent##*/,,}" == "${ORG,,}" ]]; then
-      REPO_DIR="$parent/$REPO"
+  local current="$COMPOSITE_ACTION_PATH"
+  local repo_lc="$(echo "$REPO" | tr '[:upper:]' '[:lower:]')"
+  local org_lc="$(echo "$ORG" | tr '[:upper:]' '[:lower:]')"
+  while [ "$current" != "/" ]; do
+    local parent_dir="$(dirname "$current")"
+    if [[ "$(basename "$current" | tr '[:upper:]' '[:lower:]')" == "$repo_lc" ]] &&
+       [[ "$(basename "$parent_dir" | tr '[:upper:]' '[:lower:]')" == "$org_lc" ]]; then
+      REPO_DIR="$parent_dir/$REPO"
       log_debug "Found REPO_DIR=$REPO_DIR"
       return
     fi
-    path="$parent"
+    current="$parent_dir"
   done
   log_error "Could not find repo dir for $COMPOSITE_ACTION_REPOSITORY"
 }
 
 resolve_target_path() {
-  mapfile -t SUBDIRS < <(find "$REPO_DIR" -mindepth 1 -maxdepth 1 -type d)
-  [[ ${#SUBDIRS[@]} -ne 1 ]] && log_error "Expected exactly one subdir in $REPO_DIR"
-  TARGET_PATH="${SUBDIRS[0]}"
-  log_debug "Resolved COMPOSITE_ACTION_REPOSITORY_PATH=$TARGET_PATH"
+  SUBDIRS=()
+  while IFS= read -r -d '' dir; do
+    SUBDIRS+=("$dir")
+  done < <(find "$REPO_DIR" -mindepth 1 -maxdepth 1 -type d -print0)
+
+  if [[ ${#SUBDIRS[@]} -ne 1 ]]; then
+    log_error "Expected exactly one subdir in $REPO_DIR"
+  else
+    TARGET_PATH="${SUBDIRS[0]}"
+    log_debug "Resolved TARGET_PATH=$TARGET_PATH"
+  fi
 }
 
 create_symlink() {
@@ -47,7 +57,6 @@ create_symlink() {
   [ -L "$SYMLINK" ] && rm "$SYMLINK"
   ln -s "$TARGET_PATH" "$SYMLINK"
   echo "✅ Symlink created successfully."
-  log_debug "  → $TARGET_PATH"
 }
 
 main() {
@@ -58,4 +67,18 @@ main() {
   create_symlink
 }
 
-main
+test_main() {
+  COMPOSITE_ACTION_PATH="./test/_action/wei18/helper-action/main/composite-actions/action1"
+  COMPOSITE_ACTION_REPOSITORY="wei18/helper-action"
+  GITHUB_WORKSPACE="./test/work/awesome-repo/awesome-repo"
+  mkdir -p $COMPOSITE_ACTION_PATH
+  mkdir -p $GITHUB_WORKSPACE
+  main
+  rm -rf ./test
+}
+
+if true; then
+  main
+else
+  test_main
+fi
