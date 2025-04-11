@@ -22,4 +22,6 @@ runs:
         COMPOSITE_ACTION_REPOSITORY: ${{ inputs.composite_action_repository }}
         GITHUB_WORKSPACE: ${{ github.workspace }}
       run: |
+        echo "::group::Starting resolve-action-symlink"
         bash ${{ github.action_path }}/resolve-action-symlink.bash
+        echo "::endgroup::"
