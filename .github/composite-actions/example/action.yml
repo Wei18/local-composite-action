@@ -1,0 +1,18 @@
+name: Example
+
+runs:
+  using: "composite"
+  steps:
+    - name: Resolve local composite action path
+      uses: wei18/local-composite-action@main
+      with:
+        composite_action_path: ${{ github.action_path }}
+        composite_action_repository: ${{ github.action_repository }}
+
+    - name: Run example composite action from local path
+      continue-on-error: true
+      uses: ./../wei18/local-composite-action/.github/composite-actions/example/just-composite-action
+
+    - name: Finish example
+      shell: bash
+      run: echo "Example completed successfully"

@@ -1,0 +1,15 @@
+name: Test
+
+on:
+  workflow_dispatch:
+
+  push:
+    branches:
+      - main
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run local composite action example
+        uses: wei18/local-composite-action/.github/composite-actions/example@main
