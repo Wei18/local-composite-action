@@ -1,0 +1,25 @@
+name: Local Composite Action Uses
+description: Replaces github.action_path references in a composite action
+inputs:
+  composite_action_path:
+    description: >
+      The path where an action is located.
+      Please input: `GITHUB_ACTION_PATH`
+    required: true
+  composite_action_repository:
+    description: >
+      This is the owner and repository name of the action.
+      Please input: `GITHUB_ACTION_REPOSITORY`
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - name: Replace 'uses:' lines with correct path
+      shell: bash
+      env:
+        COMPOSITE_ACTION_PATH: ${{ inputs.composite_action_path }}
+        COMPOSITE_ACTION_REPOSITORY: ${{ inputs.composite_action_repository }}
+        GITHUB_WORKSPACE: ${{ github.workspace }}
+      run: |
+        bash ${{ github.action_path }}/resolve-action-symlink.bash
