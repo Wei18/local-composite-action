@@ -10,7 +10,6 @@ runs:
         composite_action_repository: ${{ github.action_repository }}
 
     - name: Run example composite action from local path
-      continue-on-error: true
       uses: ./../wei18/local-composite-action/.github/composite-actions/example/just-composite-action
 
     - name: Finish example

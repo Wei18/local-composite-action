@@ -48,7 +48,7 @@ A GitHub Action to conveniently reference local Composite Actions!
 ---
 
 ## 🧪 Example
-https://github.com/Wei18/local-composite-action/blob/045fe28cd55255df50ee4a430d7473afa1091dd1/.github/composite-actions/example/action.yml#L1-L18
+https://github.com/Wei18/local-composite-action/blob/9ccc99757989905871bacddf88f8a95215bdc9dc/.github/composite-actions/example/action.yml#L1-L17
 
 ---
 
