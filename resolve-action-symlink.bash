@@ -1,80 +1,59 @@
 #!/bin/bash
 set -e
 
-# 確保三個變數存在
-echo "::group::🔍 Step 0 - Validate required variables"
-if [[ -z "$COMPOSITE_ACTION_PATH" || -z "$COMPOSITE_ACTION_REPOSITORY" || -z "$GITHUB_WORKSPACE" ]]; then
-  echo "::error file=${BASH_SOURCE[0]},line=${LINENO}::One or more required environment variables are missing."
-  exit 1
-fi
-echo "::debug file=${BASH_SOURCE[0]},line=${LINENO}::All required variables are present."
-echo "::endgroup::"
+log_error()   { echo "::error file=${BASH_SOURCE[1]},line=${BASH_LINENO[0]}::$1"; exit 1; }
+log_debug()   { echo "::debug::$1"; }
 
-# 拆 org/repo
-echo "::group::🔍 Step 1 - Parse COMPOSITE_ACTION_REPOSITORY"
-IFS='/' read -r ORG_NAME REPO_NAME <<< "$COMPOSITE_ACTION_REPOSITORY"
+validate_env() {
+  : "${COMPOSITE_ACTION_PATH:?Missing COMPOSITE_ACTION_PATH}"
+  : "${COMPOSITE_ACTION_REPOSITORY:?Missing COMPOSITE_ACTION_REPOSITORY}"
+  : "${GITHUB_WORKSPACE:?Missing GITHUB_WORKSPACE}"
+}
 
-if [[ -z "$ORG_NAME" || -z "$REPO_NAME" ]]; then
-  echo "::error file=${BASH_SOURCE[0]},line=${LINENO}::Invalid COMPOSITE_ACTION_REPOSITORY format. Expected 'org/repo', got '$COMPOSITE_ACTION_REPOSITORY'"
-  exit 1
-fi
-echo "::debug file=${BASH_SOURCE[0]},line=${LINENO}::Parsed ORG_NAME=$ORG_NAME, REPO_NAME=$REPO_NAME"
-echo "::endgroup::"
+parse_repo() {
+  IFS='/' read -r ORG REPO <<< "$COMPOSITE_ACTION_REPOSITORY"
+  [[ -z "$ORG" || -z "$REPO" ]] && log_error "Invalid COMPOSITE_ACTION_REPOSITORY format"
+}
 
-# 往上找 org/repo 結構
-echo "::group::🔍 Step 2 - Search for repository directory path"
-current="$COMPOSITE_ACTION_PATH"
-REPO_DIR=""
+find_repo_dir() {
+  local path="$COMPOSITE_ACTION_PATH"
+  while [ "$path" != "/" ]; do
+    local parent="$(dirname "$path")"
+    if [[ "${path##*/,,}" == "${REPO,,}" && "${parent##*/,,}" == "${ORG,,}" ]]; then
+      REPO_DIR="$parent/$REPO"
+      return
+    fi
+    path="$parent"
+  done
+  log_error "Could not find repo dir for $COMPOSITE_ACTION_REPOSITORY"
+}
 
-while [ "$current" != "/" ]; do
-  parent_dir="$(dirname "$current")"
-  if [[ "$(basename "$current" | tr '[:upper:]' '[:lower:]')" == "$(echo "$REPO_NAME" | tr '[:upper:]' '[:lower:]')" ]] &&
-     [[ "$(basename "$parent_dir" | tr '[:upper:]' '[:lower:]')" == "$(echo "$ORG_NAME" | tr '[:upper:]' '[:lower:]')" ]]; then
-    REPO_DIR="$parent_dir/$REPO_NAME"
-    break
-  fi
-  current="$parent_dir"
-done
+resolve_target_path() {
+  mapfile -t SUBDIRS < <(find "$REPO_DIR" -mindepth 1 -maxdepth 1 -type d)
+  [[ ${#SUBDIRS[@]} -ne 1 ]] && log_error "Expected exactly one subdir in $REPO_DIR"
+  TARGET_PATH="${SUBDIRS[0]}"
+  echo "Resolved COMPOSITE_ACTION_REPOSITORY_PATH: $TARGET_PATH"
+}
 
-if [ -z "$REPO_DIR" ]; then
-  echo "::error file=${BASH_SOURCE[0]},line=${LINENO}::Could not find '$COMPOSITE_ACTION_REPOSITORY' (org/repo) in any parent directory of: $COMPOSITE_ACTION_PATH"
-  exit 1
-fi
+create_symlink() {
+  local link_root="$(dirname "$GITHUB_WORKSPACE")"
+  SYMLINK="$link_root/$COMPOSITE_ACTION_REPOSITORY"
+  echo "Creating SYMLINK: $SYMLINK"
+  mkdir -p "$(dirname "$SYMLINK")"
+  [ -L "$SYMLINK" ] && rm "$SYMLINK"
+  ln -s "$TARGET_PATH" "$SYMLINK"
+  echo "✅ Symlink created successfully."
+  log_debug " → $TARGET_PATH"
+}
 
-echo "::debug file=${BASH_SOURCE[0]},line=${LINENO}::Found repository folder: $REPO_DIR"
-echo "::endgroup::"
+main() {
+  echo "::group::🔗 Starting resolve-action-symlink"
+  validate_env
+  parse_repo
+  find_repo_dir
+  resolve_target_path
+  create_symlink
+  echo "::endgroup::"
+}
 
-# 找唯一的子資料夾
-echo "::group::📁 Step 3 - Locate subdirectory inside repo"
-mapfile -t SUBDIRS < <(find "$REPO_DIR" -mindepth 1 -maxdepth 1 -type d)
-
-if [ "${#SUBDIRS[@]}" -ne 1 ]; then
-  echo "::debug file=${BASH_SOURCE[0]},line=${LINENO}::Contents of $REPO_DIR:"
-  ls -la "$REPO_DIR"
-  echo "::error file=${BASH_SOURCE[0]},line=${LINENO}::Expected exactly one subdirectory inside: $REPO_DIR"
-  exit 1
-fi
-
-COMPOSITE_ACTION_REPOSITORY_PATH="${SUBDIRS[0]}"
-echo "Resolved COMPOSITE_ACTION_REPOSITORY_PATH: $COMPOSITE_ACTION_REPOSITORY_PATH"
-echo "::endgroup::"
-
-# 建立 symlink
-echo "::group::🔗 Step 4 - Create symlink"
-LINK_PARENT_DIR="$(dirname "$GITHUB_WORKSPACE")"
-SYMLINK_PATH="$LINK_PARENT_DIR/$COMPOSITE_ACTION_REPOSITORY"
-
-echo "::debug file=${BASH_SOURCE[0]},line=${LINENO}::Creating symlink: $SYMLINK_PATH → $COMPOSITE_ACTION_REPOSITORY_PATH"
-echo "Creating symlink: SYMLINK_PATH: $SYMLINK_PATH"
-
-# 確保父目錄存在
-mkdir -p "$(dirname "$SYMLINK_PATH")"
-
-# 如果已有，先刪掉
-[ -L "$SYMLINK_PATH" ] && rm "$SYMLINK_PATH"
-
-# 建立 symlink
-ln -s "$COMPOSITE_ACTION_REPOSITORY_PATH" "$SYMLINK_PATH"
-
-echo "✅ Symlink created successfully."
-echo "::endgroup::"
+main

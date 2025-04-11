@@ -15,16 +15,12 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Replace 'uses:' lines with correct path
-      shell: bash
-      env:
+    - env:
         COMPOSITE_ACTION_PATH: ${{ inputs.composite_action_path }}
         COMPOSITE_ACTION_REPOSITORY: ${{ inputs.composite_action_repository }}
         GITHUB_WORKSPACE: ${{ github.workspace }}
-      run: |
-        echo "::group::Starting resolve-action-symlink"
-        bash ${{ github.action_path }}/resolve-action-symlink.bash
-        echo "::endgroup::"
+      shell: bash
+      run: bash ${{ github.action_path }}/resolve-action-symlink.bash
 
 branding:
   icon: 'arrow-right'
