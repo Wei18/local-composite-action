@@ -17,19 +17,23 @@ A GitHub Action to conveniently reference local Composite Actions!
 ### Step 1: Add this action to your composite action
 
 ```yaml
-- name: Resolve local composite action path
-  uses: wei18/local-composite-action@main
-  with:
-    composite_action_path: ${{ github.action_path }}
-    composite_action_repository: ${{ github.action_repository }}
+name: Your composite action
+
+runs:
+  using: 'composite'
+  steps:
+    - uses: wei18/local-composite-action@v1
+      with:
+        composite_action_path: ${{ github.action_path }}
+        composite_action_repository: ${{ github.action_repository }}
+    
+    - name: Run local your composite action
+      uses: ./../org/repo/.github/composite-actions/example/just-composite-action
+
+    - name: Run local your second composite action
+      uses: ./../org/repo/.github/composite-actions/example/another-composite-action
 ```
 
-### Step 2: Use local path to call the composite action
-
-```yaml
-- name: Run local composite action
-  uses: ./../org/repo/.github/composite-actions/example/just-composite-action
-```
 > [!IMPORTANT] 
 > Adjust the relative path based on the symlink location (typically one level above `$GITHUB_WORKSPACE`).
 >
@@ -44,11 +48,6 @@ A GitHub Action to conveniently reference local Composite Actions!
 | `composite_action_path`  | The actual path to the composite action      | ✅       | –              |
 | `composite_action_repository` | The repository name in the form of `org/repo` | ✅       | –              |
 | `action_filename`        | The filename for the composite action (`.yml` or `.yaml`) | ❌       | `action.yml`   |
-
----
-
-## 🧪 Example
-https://github.com/Wei18/local-composite-action/blob/9ccc99757989905871bacddf88f8a95215bdc9dc/.github/composite-actions/example/action.yml#L1-L17
 
 ---
 
