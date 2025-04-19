@@ -1,6 +1,13 @@
 name: 'Setup Symlink for Action Repository'
 description: 'Find and create symlink to the action repository path based on the provided inputs.'
 
+# ``` example
+# steps:
+#   - uses: wei18/local-composite-action@v1
+#     with:
+#       action_repository: ${{ github.action_repository }}
+# ```
+
 inputs:
   action_path:
     description: The path where an action is located.
@@ -8,7 +15,7 @@ inputs:
   action_repository:
     description: |
       This is the owner and repository name of the action.
-      Please input `${{ github.action_repository }}`.
+      Please input the value of GITHUB_ACTION_REPOSITORY
     required: true
 
 runs:

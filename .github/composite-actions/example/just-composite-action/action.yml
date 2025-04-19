@@ -4,6 +4,8 @@ runs:
   using: "composite"
   steps:
     - uses: wei18/local-composite-action@main
+      with:
+        action_repository: ${{ github.action_repository }}
     
     - shell: bash
       run: echo "Just a composite action"

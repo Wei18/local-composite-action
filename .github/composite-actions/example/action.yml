@@ -4,6 +4,8 @@ runs:
   using: "composite"
   steps:
     - uses: wei18/local-composite-action@main
+      with:
+        action_repository: ${{ github.action_repository }}
 
     - name: Run just-composite-action
       uses: ./../wei18/local-composite-action/.github/composite-actions/example/just-composite-action

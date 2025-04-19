@@ -39,10 +39,10 @@ runs:
 
 ## 📥 Inputs
 
-| Name                | Description                                   | Default                         |
-|---------------------|-----------------------------------------------|---------------------------------|
-| `action_path`       | The actual path to the composite action       | ${{ github.action_path }}       |
-| `action_repository` | The repository name in the form of `org/repo` |                                 |
+| Name                | Description                                   | Required | Default                   |
+|---------------------|-----------------------------------------------|----------|---------------------------|
+| `action_path`       | The actual path to the composite action       |          | ${{ github.action_path }} |
+| `action_repository` | The repository name in the form of `org/repo` | ✅       |                           |
 
 ---
 
