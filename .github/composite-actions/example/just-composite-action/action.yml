@@ -3,5 +3,7 @@ name: Just a composite action
 runs:
   using: "composite"
   steps:
+    - uses: wei18/local-composite-action@main
+    
     - shell: bash
       run: echo "Just a composite action"

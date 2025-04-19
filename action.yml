@@ -1,29 +1,65 @@
-name: Local Composite Action Uses
-description: Replaces github.action_path references in a composite action
+name: 'Setup Symlink for Action Repository'
+description: 'Find and create symlink to the action repository path based on the provided inputs.'
+
 inputs:
-  composite_action_path:
-    description: >
-      The path where an action is located.
-      Please input: `GITHUB_ACTION_PATH`
-    required: true
-  composite_action_repository:
-    description: >
-      This is the owner and repository name of the action.
-      Please input: `GITHUB_ACTION_REPOSITORY`
-    required: true
+  action_path:
+    description: The path where an action is located.
+    default: ${{ github.action_path }}
+  action_repository:
+    description: This is the owner and repository name of the action.
+    default: ${{ github.action_repository }}
 
 runs:
   using: "composite"
   steps:
-    - shell: bash
+    - name: Find action repository directory
+      id: action_repository
       env:
-        COMPOSITE_ACTION_PATH: ${{ inputs.composite_action_path }}
-        COMPOSITE_ACTION_REPOSITORY: ${{ inputs.composite_action_repository }}
-        GITHUB_WORKSPACE: ${{ github.workspace }}
+        ACTION_PATH: ${{ inputs.action_path }}
+        ACTION_REPOSITORY: ${{ inputs.action_repository }}
+      shell: bash
       run: |
-        echo "::group::🔗 Starting resolve-action-symlink"
-        bash ${{ github.action_path }}/resolve-action-symlink.bash
-        echo "::endgroup::"
+        # Find action repository directory
+
+        # Parse the organization and repository from the provided input (composite_action_repository)
+        IFS='/' read -r ORG REPO <<< "$ACTION_REPOSITORY"
+        ORG="$(echo "$ORG" | tr '[:upper:]' '[:lower:]')"
+        REPO="$(echo "$REPO" | tr '[:upper:]' '[:lower:]')"
+
+        # Convert the current path to lowercase initially to avoid doing it repeatedly in the loop
+        CURRENT="$(echo "$ACTION_PATH" | tr '[:upper:]' '[:lower:]')"
+
+        # Start from the composite action path and check each parent directory
+        while [ "$CURRENT" != "/" ]; do
+          # from path/to/org/repo/hash/to/action/
+          # to path/to/org/repo/hash/
+          CURRENT_NAME="$(basename "$CURRENT")"
+          PARENT="$(dirname "$CURRENT")"
+          PARENT_NAME="$(basename "$PARENT")"
+          GRANDPARENT="$(dirname "$PARENT")"
+          GRANDPARENT_NAME="$(basename "$GRANDPARENT")"
+
+          if [[ "$PARENT_NAME" == "$REPO" && "$GRANDPARENT_NAME" == "$ORG" ]]; then
+            echo "path=$CURRENT" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          CURRENT="$PARENT"
+        done
+
+        # If no match is found, output an error
+        echo "::error::Could not find action repository ($ACTION_REPOSITORY) from path ($ACTION_PATH)"
+        exit 1
+
+    - name: Create symlink
+      env:
+        ACTION_REPOSITORY_PATH: ${{ steps.action_repository.outputs.path }}
+        SYMLINK_PATH: ${{ github.workspace }}/${{ inputs.action_repository }}
+      shell: bash
+      run: |
+        # Create symlink, forcing overwrite if it exists
+        ln -fs "$ACTION_REPOSITORY_PATH" "$SYMLINK_PATH"
+        echo "✅ Symlink created successfully: $SYMLINK_PATH → $ACTION_REPOSITORY_PATH"
 
 branding:
   icon: 'arrow-right'
