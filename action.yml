@@ -16,7 +16,13 @@ inputs:
     description: |
       This is the owner and repository name of the action.
       Please input the value of GITHUB_ACTION_REPOSITORY
-    required: true
+    # required: true
+
+  composite_action_path:
+    description: Deprecated, please use action_path
+  composite_action_repository:
+    description: Deprecated, please use action_repository
+
 
 runs:
   using: "composite"
@@ -24,7 +30,7 @@ runs:
     - name: Detect existing symlinked action path
       id: check_symlinked
       env:
-        ACTION_PATH: ${{ inputs.action_path }}
+        ACTION_PATH: ${{ inputs.action_path || inputs.composite_action_path }}
       shell: bash
       run: |
         # -- Detect existing symlinked action path
@@ -40,8 +46,8 @@ runs:
       name: Find action repository directory
       id: action_repository
       env:
-        ACTION_PATH: ${{ inputs.action_path }}
-        ACTION_REPOSITORY: ${{ inputs.action_repository }}
+        ACTION_PATH: ${{ inputs.action_path || inputs.composite_action_path }}
+        ACTION_REPOSITORY: ${{ inputs.action_repository || inputs.composite_action_repository }}
       shell: bash
       run: |
         # -- Find action repository directory
@@ -80,7 +86,7 @@ runs:
       name: Create symlink
       env:
         ACTION_REPOSITORY_PATH: ${{ steps.action_repository.outputs.path }}
-        ACTION_REPOSITORY: ${{ inputs.action_repository }}
+        ACTION_REPOSITORY: ${{ inputs.action_repository || inputs.composite_action_repository }}
         GITHUB_WORKSPACE: ${{ github.workspace }}
       shell: bash
       run: |
