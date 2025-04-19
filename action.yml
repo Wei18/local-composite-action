@@ -54,10 +54,14 @@ runs:
     - name: Create symlink
       env:
         ACTION_REPOSITORY_PATH: ${{ steps.action_repository.outputs.path }}
-        SYMLINK_PATH: ${{ github.workspace }}/${{ inputs.action_repository }}
+        ACTION_REPOSITORY: ${{ inputs.action_repository }}
+        GITHUB_WORKSPACE: ${{ github.workspace }}
       shell: bash
       run: |
         # Create symlink, forcing overwrite if it exists
+        ROOT_DIR="$(dirname "$GITHUB_WORKSPACE")"
+        SYMLINK_PATH="$ROOT_DIR/$ACTION_REPOSITORY"
+        mkdir -p "$(dirname "$SYMLINK_PATH")"
         ln -fs "$ACTION_REPOSITORY_PATH" "$SYMLINK_PATH"
         echo "✅ Symlink created successfully: $SYMLINK_PATH → $ACTION_REPOSITORY_PATH"
 
