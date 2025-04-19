@@ -6,8 +6,10 @@ inputs:
     description: The path where an action is located.
     default: ${{ github.action_path }}
   action_repository:
-    description: This is the owner and repository name of the action.
-    default: ${{ github.action_repository }}
+    description: |
+      This is the owner and repository name of the action.
+      Please input `${{ github.action_repository }}`.
+    required: true
 
 runs:
   using: "composite"

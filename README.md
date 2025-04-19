@@ -20,6 +20,8 @@ runs:
   using: 'composite'
   steps:
     - uses: wei18/local-composite-action@v1
+      with:
+        action_repository: ${{ github.action_repository }}
     
     - name: Run local your composite action
       uses: ./../org/repo/.github/composite-actions/example/just-composite-action
@@ -40,7 +42,7 @@ runs:
 | Name                | Description                                   | Default                         |
 |---------------------|-----------------------------------------------|---------------------------------|
 | `action_path`       | The actual path to the composite action       | ${{ github.action_path }}       |
-| `action_repository` | The repository name in the form of `org/repo` | ${{ github.action_repository }} |
+| `action_repository` | The repository name in the form of `org/repo` |                                 |
 
 ---
 
