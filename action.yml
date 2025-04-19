@@ -12,7 +12,22 @@ inputs:
 runs:
   using: "composite"
   steps:
-    - name: Find action repository directory
+    - name: Detect existing symlinked action path
+      id: check_symlinked
+      env:
+        ACTION_PATH: ${{ inputs.action_path }}
+      shell: bash
+      run: |
+        if [[ "$ACTION_PATH" == *"./../"* ]]; then
+          echo "exist=true" >> "$GITHUB_OUTPUT"
+          echo "✅ Action path is local (contains ./../)"
+        else
+          echo "exist=false" >> "$GITHUB_OUTPUT"
+          echo "ℹ️ Action path is not local"
+        fi
+
+    - if: steps.check_symlinked.outputs.exist != 'true'
+      name: Find action repository directory
       id: action_repository
       env:
         ACTION_PATH: ${{ inputs.action_path }}
@@ -51,7 +66,8 @@ runs:
         echo "::error::Could not find action repository ($ACTION_REPOSITORY) from path ($ACTION_PATH)"
         exit 1
 
-    - name: Create symlink
+    - if: steps.check_symlinked.outputs.exist != 'true'
+      name: Create symlink
       env:
         ACTION_REPOSITORY_PATH: ${{ steps.action_repository.outputs.path }}
         ACTION_REPOSITORY: ${{ inputs.action_repository }}
