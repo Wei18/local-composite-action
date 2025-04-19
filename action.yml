@@ -18,6 +18,8 @@ runs:
         ACTION_PATH: ${{ inputs.action_path }}
       shell: bash
       run: |
+        # Detect existing symlinked action path
+
         if [[ "$ACTION_PATH" == *"./../"* ]]; then
           echo "exist=true" >> "$GITHUB_OUTPUT"
           echo "✅ Action path is local (contains ./../)"
@@ -75,6 +77,7 @@ runs:
       shell: bash
       run: |
         # Create symlink, forcing overwrite if it exists
+        
         ROOT_DIR="$(dirname "$GITHUB_WORKSPACE")"
         SYMLINK_PATH="$ROOT_DIR/$ACTION_REPOSITORY"
         mkdir -p "$(dirname "$SYMLINK_PATH")"

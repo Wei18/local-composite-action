@@ -6,7 +6,7 @@ A GitHub Action to conveniently reference local actions!
 ## ✨ Features
 
 - ✅ Automatically resolves the local composite action path
-- ✅ Creates symlinks to support `uses: ./local/path` references
+- ✅ Creates symlinks to use `./../org/repo/path/to/action` references
 - ✅ Compatible with default GitHub Actions behavior
 
 ---
