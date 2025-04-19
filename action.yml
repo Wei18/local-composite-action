@@ -18,14 +18,13 @@ runs:
         ACTION_PATH: ${{ inputs.action_path }}
       shell: bash
       run: |
-        # Detect existing symlinked action path
+        # -- Detect existing symlinked action path
 
         if [[ "$ACTION_PATH" == *"./../"* ]]; then
           echo "exist=true" >> "$GITHUB_OUTPUT"
-          echo "✅ Action path is local (contains ./../)"
+          echo "✅ Action path is local (contains ./../); skipping remaining steps."
         else
           echo "exist=false" >> "$GITHUB_OUTPUT"
-          echo "ℹ️ Action path is not local"
         fi
 
     - if: steps.check_symlinked.outputs.exist != 'true'
@@ -36,7 +35,7 @@ runs:
         ACTION_REPOSITORY: ${{ inputs.action_repository }}
       shell: bash
       run: |
-        # Find action repository directory
+        # -- Find action repository directory
 
         # Parse the organization and repository from the provided input (composite_action_repository)
         IFS='/' read -r ORG REPO <<< "$ACTION_REPOSITORY"
@@ -76,13 +75,13 @@ runs:
         GITHUB_WORKSPACE: ${{ github.workspace }}
       shell: bash
       run: |
-        # Create symlink, forcing overwrite if it exists
-        
+        # -- Create symlink, forcing overwrite if it exists
+
         ROOT_DIR="$(dirname "$GITHUB_WORKSPACE")"
         SYMLINK_PATH="$ROOT_DIR/$ACTION_REPOSITORY"
         mkdir -p "$(dirname "$SYMLINK_PATH")"
         ln -fs "$ACTION_REPOSITORY_PATH" "$SYMLINK_PATH"
-        echo "✅ Symlink created successfully: $SYMLINK_PATH → $ACTION_REPOSITORY_PATH"
+        echo "✅ You can now use it with \`uses: ./../$ACTION_REPOSITORY/path/to/action\`"
 
 branding:
   icon: 'arrow-right'
