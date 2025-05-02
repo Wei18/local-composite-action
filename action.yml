@@ -81,7 +81,7 @@ runs:
       env:
         ACTION_REPOSITORY_PATH: ${{ steps.action_repository.outputs.path }}
         ACTION_REPOSITORY: ${{ inputs.action_repository }}
-        SYMLINK_PATH: ${{ format('{0}/../{1}', github.workspace, inputs.action_repository }}
+        SYMLINK_PATH: ${{ format('{0}/../{1}', github.workspace, inputs.action_repository) }}
       shell: bash
       run: |
         # -- Create symlink, forcing overwrite if it exists
